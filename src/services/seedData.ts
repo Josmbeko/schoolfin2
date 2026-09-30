@@ -1,0 +1,597 @@
+import { doc, writeBatch } from 'firebase/firestore';
+import { db } from '../firebase/config';
+import { School, UserProfile, SectionItem, ClassItem, OptionItem, FeeType, Student, StudentCharge, Payment, Receipt, CashOperation } from '../types';
+import { numberToWords } from '../utils/numberToWords';
+
+export async function seedDemoSchoolData(schoolId: string, userEmail: string = 'controlpolytra@gmail.com'): Promise<void> {
+  const batch = writeBatch(db);
+  const now = new Date().toISOString();
+  const today = now.split('T')[0];
+
+  // 1. School Root Config
+  const school: School = {
+    id: schoolId,
+    name: 'Collège Boboto',
+    address: 'Avenue de la Justice, Commune de Gombe',
+    city: 'Kinshasa',
+    province: 'Kinshasa',
+    country: 'République Démocratique du Congo',
+    phone: '+243 81 500 2000',
+    email: 'contact@college-boboto.cd',
+    currency: 'CDF',
+    schoolYear: '2026-2027',
+    matriculePrefix: '2026',
+    enrollmentStartMonth: 'Juillet',
+    enrollmentEndMonth: 'Septembre',
+    schoolYearStartMonth: 'Septembre',
+    schoolYearEndMonth: 'Juillet',
+    createdAt: now,
+    updatedAt: now,
+  };
+  batch.set(doc(db, 'schools', schoolId), school);
+
+  // 1a. School Users / Staff Roles
+  const usersData: UserProfile[] = [
+    {
+      id: 'usr_admin',
+      schoolId,
+      email: userEmail || 'controlpolytra@gmail.com',
+      displayName: 'Administrateur Général',
+      role: 'admin',
+      active: true,
+      createdAt: now,
+    },
+    {
+      id: 'usr_director',
+      schoolId,
+      email: 'directeur.etudes@college-boboto.cd',
+      displayName: 'Directeur des Études',
+      role: 'director',
+      active: true,
+      createdAt: now,
+    },
+    {
+      id: 'usr_cashier',
+      schoolId,
+      email: 'cecile.mbuyi@college-boboto.cd',
+      displayName: 'Mme Cécile Mbuyi (Caissière)',
+      role: 'cashier',
+      active: true,
+      createdAt: now,
+    },
+    {
+      id: 'usr_secretary',
+      schoolId,
+      email: 'secretaire@college-boboto.cd',
+      displayName: 'Secrétariat Administratif',
+      role: 'secretary',
+      active: true,
+      createdAt: now,
+    },
+  ];
+  usersData.forEach(u => batch.set(doc(db, 'schools', schoolId, 'users', u.id), u));
+
+  // 1b. Pedagogical Sections
+  const sectionsData: SectionItem[] = [
+    { id: 'sec_mat', schoolId, name: 'Maternelle', code: 'MAT', description: 'Cycle préscolaire (Petite, Moyenne et Grande section)', order: 1, active: true, createdAt: now },
+    { id: 'sec_prim', schoolId, name: 'Primaire', code: 'PRIM', description: 'Enseignement fondamental (1ère à 6ème Primaire)', order: 2, active: true, createdAt: now },
+    { id: 'sec_edb', schoolId, name: 'Éducation de Base', code: 'EDB', description: '7ème et 8ème de Base (Tronc commun général sans options)', order: 3, active: true, createdAt: now },
+    { id: 'sec_sec', schoolId, name: 'Secondaire', code: 'SEC', description: 'Humanités Générales & Techniques (1ère, 2è, 3è, 4è - Choix d\'options)', order: 4, active: true, createdAt: now },
+  ];
+  sectionsData.forEach(s => batch.set(doc(db, 'schools', schoolId, 'sections', s.id), s));
+
+  // 2. Classes
+  const classesData: ClassItem[] = [
+    { id: 'cls_7eb', schoolId, name: '7ème Éducation de Base A', section: 'Éducation de Base', level: '7ème', monthlyFee: 85000, active: true, createdAt: now },
+    { id: 'cls_8eb', schoolId, name: '8ème Éducation de Base B', section: 'Éducation de Base', level: '8ème', monthlyFee: 85000, active: true, createdAt: now },
+    { id: 'cls_1sc', schoolId, name: '1ère Scientifique A', section: 'Secondaire', level: '1ère', optionId: 'opt_sc', optionName: 'Sciences Mathématiques & Physiques', monthlyFee: 110000, active: true, createdAt: now },
+    { id: 'cls_2sc', schoolId, name: '2è Scientifique B', section: 'Secondaire', level: '2è', optionId: 'opt_bio', optionName: 'Sciences Chimiques & Biologiques', monthlyFee: 110000, active: true, createdAt: now },
+    { id: 'cls_3cg', schoolId, name: '3è Commerciale & Gestion', section: 'Secondaire', level: '3è', optionId: 'opt_cg', optionName: 'Commerciale & Gestion Informatique', monthlyFee: 95000, active: true, createdAt: now },
+    { id: 'cls_4sc', schoolId, name: '4è Scientifique (Terminale)', section: 'Secondaire', level: '4è', optionId: 'opt_sc', optionName: 'Sciences Mathématiques & Physiques', monthlyFee: 125000, active: true, createdAt: now },
+  ];
+
+  classesData.forEach(c => batch.set(doc(db, 'schools', schoolId, 'classes', c.id), c));
+
+  // 3. Options
+  const optionsData: OptionItem[] = [
+    { id: 'opt_sc', schoolId, name: 'Sciences Mathématiques & Physiques', section: 'Secondaire', active: true },
+    { id: 'opt_bio', schoolId, name: 'Sciences Chimiques & Biologiques', section: 'Secondaire', active: true },
+    { id: 'opt_cg', schoolId, name: 'Commerciale & Gestion Informatique', section: 'Secondaire', active: true },
+    { id: 'opt_lit', schoolId, name: 'Littéraire & Latin-Philosophie', section: 'Secondaire', active: true },
+  ];
+
+  optionsData.forEach(o => batch.set(doc(db, 'schools', schoolId, 'options', o.id), o));
+
+  // 4. Fee Catalog
+  const feeTypes: FeeType[] = [
+    { id: 'fee_ins', schoolId, name: "Frais d'Inscription & Réinscription", category: "Frais d'Inscription & Réinscription", section: '', promotion: '', amount: 50000, frequency: 'once', active: true, createdAt: now },
+    { id: 'fee_min_sep', schoolId, name: 'Minerval - Septembre 2026', category: 'Minerval', section: 'Secondaire', promotion: '', amount: 85000, frequency: 'monthly', active: true, createdAt: now },
+    { id: 'fee_min_oct', schoolId, name: 'Minerval - Octobre 2026', category: 'Minerval', section: 'Secondaire', promotion: '', amount: 85000, frequency: 'monthly', active: true, createdAt: now },
+    { id: 'fee_min_nov', schoolId, name: 'Minerval - Novembre 2026', category: 'Minerval', section: 'Secondaire', promotion: '', amount: 85000, frequency: 'monthly', active: true, createdAt: now },
+    { id: 'fee_etat', schoolId, name: "Frais de l'Etat & Bulletin", category: "Frais de l'Etat", section: '', promotion: '', amount: 25000, frequency: 'termly', active: true, createdAt: now },
+    { id: 'fee_labo', schoolId, name: 'Frais Travaux Pratiques & Laboratoire', category: 'Frais Travaux Pratiques & Laboratoire', section: 'Secondaire', promotion: '1ère', optionId: 'opt_sc', optionName: 'Sciences Mathématiques & Physiques', amount: 40000, frequency: 'annual', active: true, createdAt: now },
+    { id: 'fee_exetat', schoolId, name: "Frais d'Examen d'État & Jury", category: "Frais d'Examen d'État & Jury", section: 'Secondaire', promotion: '4ème Secondaire (Terminale)', amount: 75000, frequency: 'once', active: true, createdAt: now },
+  ];
+
+  feeTypes.forEach(f => batch.set(doc(db, 'schools', schoolId, 'feeTypes', f.id), f));
+
+  // 5. Students
+  const studentsData: Student[] = [
+    {
+      id: 'stu_1',
+      schoolId,
+      matricule: '2026-000001',
+      firstName: 'Jonathan',
+      lastName: 'Kalonji',
+      gender: 'M',
+      dateOfBirth: '2008-05-14',
+      placeOfBirth: 'Kinshasa',
+      classId: 'cls_4sc',
+      className: 'Terminale Scientifique',
+      optionId: 'opt_sc',
+      optionName: 'Sciences Mathématiques & Physiques',
+      parentName: 'Prof. Dieudonné Kalonji',
+      parentPhone: '+243 82 111 2233',
+      parentEmail: 'd.kalonji@gmail.com',
+      address: '14 Av. Colonel Mondjiba, Ngaliema',
+      enrollmentDate: '2026-08-25',
+      status: 'active',
+      creditAdvance: 15000,
+      createdAt: now,
+    },
+    {
+      id: 'stu_2',
+      schoolId,
+      matricule: '2026-000002',
+      firstName: 'Esther',
+      lastName: 'Mwamba',
+      gender: 'F',
+      dateOfBirth: '2009-11-20',
+      placeOfBirth: 'Lubumbashi',
+      classId: 'cls_1sc',
+      className: '1ère Scientifique A',
+      optionId: 'opt_bio',
+      optionName: 'Sciences Chimiques & Biologiques',
+      parentName: 'Mme Christine Mwamba',
+      parentPhone: '+243 99 888 7766',
+      parentEmail: 'c.mwamba@yahoo.fr',
+      address: '28 Rue de la Paix, Kintambo',
+      enrollmentDate: '2026-08-27',
+      status: 'active',
+      creditAdvance: 0,
+      createdAt: now,
+    },
+    {
+      id: 'stu_3',
+      schoolId,
+      matricule: '2026-000003',
+      firstName: 'David',
+      lastName: 'Ilunga',
+      gender: 'M',
+      dateOfBirth: '2010-03-08',
+      placeOfBirth: 'Kinshasa',
+      classId: 'cls_7eb',
+      className: '7ème Éducation de Base A',
+      parentName: 'M. Jean-Claude Ilunga',
+      parentPhone: '+243 81 222 4455',
+      parentEmail: 'jc.ilunga@gmail.com',
+      address: '05 Av. des Aviateurs, Gombe',
+      enrollmentDate: '2026-09-01',
+      status: 'active',
+      creditAdvance: 0,
+      createdAt: now,
+    },
+    {
+      id: 'stu_4',
+      schoolId,
+      matricule: '2026-000004',
+      firstName: 'Grâce',
+      lastName: 'Bakomito',
+      gender: 'F',
+      dateOfBirth: '2008-09-12',
+      placeOfBirth: 'Kisangani',
+      classId: 'cls_4cg',
+      className: 'Terminale Commerciale',
+      optionId: 'opt_cg',
+      optionName: 'Commerciale & Gestion Informatique',
+      parentName: 'Hon. Bakomito Gambu',
+      parentPhone: '+243 85 999 0011',
+      parentEmail: 'bakomito.famille@gmail.com',
+      address: '88 Boulevard du 30 Juin, Gombe',
+      enrollmentDate: '2026-08-20',
+      status: 'active',
+      creditAdvance: 0,
+      createdAt: now,
+    },
+    {
+      id: 'stu_5',
+      schoolId,
+      matricule: '2026-000005',
+      firstName: 'Samuel',
+      lastName: 'Tshisekedi',
+      gender: 'M',
+      dateOfBirth: '2010-07-22',
+      placeOfBirth: 'Kinshasa',
+      classId: 'cls_8eb',
+      className: '8ème Éducation de Base B',
+      parentName: 'M. Roger Tshisekedi',
+      parentPhone: '+243 89 777 6655',
+      parentEmail: 'r.tshisekedi@hotmail.com',
+      address: '42 Av. Université, Lemba',
+      enrollmentDate: '2026-09-02',
+      status: 'active',
+      creditAdvance: 0,
+      createdAt: now,
+    }
+  ];
+
+  studentsData.forEach(s => batch.set(doc(db, 'schools', schoolId, 'students', s.id), s));
+
+  // 6. Student Charges
+  const charges: StudentCharge[] = [
+    // Jonathan Kalonji (Student 1) - Terminale Sc
+    {
+      id: 'chg_1_ins',
+      schoolId,
+      studentId: 'stu_1',
+      studentName: 'Kalonji Jonathan',
+      matricule: '2026-000001',
+      feeTypeId: 'fee_ins',
+      feeTypeName: "Frais d'Inscription",
+      schoolYear: '2026-2027',
+      label: "Frais d'Inscription 2026-2027",
+      dueDate: '2026-09-05',
+      amountDue: 50000,
+      discountAmount: 0,
+      netAmount: 50000,
+      paidAmount: 50000,
+      status: 'paid',
+      createdAt: now,
+    },
+    {
+      id: 'chg_1_sep',
+      schoolId,
+      studentId: 'stu_1',
+      studentName: 'Kalonji Jonathan',
+      matricule: '2026-000001',
+      feeTypeId: 'fee_min_sep',
+      feeTypeName: 'Minerval',
+      schoolYear: '2026-2027',
+      label: 'Minerval - Septembre 2026',
+      dueDate: '2026-09-15',
+      amountDue: 125000,
+      discountAmount: 0,
+      netAmount: 125000,
+      paidAmount: 125000,
+      status: 'paid',
+      createdAt: now,
+    },
+    {
+      id: 'chg_1_oct',
+      schoolId,
+      studentId: 'stu_1',
+      studentName: 'Kalonji Jonathan',
+      matricule: '2026-000001',
+      feeTypeId: 'fee_min_oct',
+      feeTypeName: 'Minerval',
+      schoolYear: '2026-2027',
+      label: 'Minerval - Octobre 2026',
+      dueDate: '2026-10-15',
+      amountDue: 125000,
+      discountAmount: 0,
+      netAmount: 125000,
+      paidAmount: 65000,
+      status: 'partial',
+      createdAt: now,
+    },
+    {
+      id: 'chg_1_lab',
+      schoolId,
+      studentId: 'stu_1',
+      studentName: 'Kalonji Jonathan',
+      matricule: '2026-000001',
+      feeTypeId: 'fee_labo',
+      feeTypeName: 'Laboratoire',
+      schoolYear: '2026-2027',
+      label: 'Frais Laboratoire & TP Chimie',
+      dueDate: '2026-10-30',
+      amountDue: 40000,
+      discountAmount: 0,
+      netAmount: 40000,
+      paidAmount: 0,
+      status: 'pending',
+      createdAt: now,
+    },
+
+    // Esther Mwamba (Student 2)
+    {
+      id: 'chg_2_ins',
+      schoolId,
+      studentId: 'stu_2',
+      studentName: 'Mwamba Esther',
+      matricule: '2026-000002',
+      feeTypeId: 'fee_ins',
+      feeTypeName: "Frais d'Inscription",
+      schoolYear: '2026-2027',
+      label: "Frais d'Inscription 2026-2027",
+      dueDate: '2026-09-05',
+      amountDue: 50000,
+      discountAmount: 10000, // Remise bourse d'excellence
+      netAmount: 40000,
+      paidAmount: 40000,
+      status: 'paid',
+      createdAt: now,
+    },
+    {
+      id: 'chg_2_sep',
+      schoolId,
+      studentId: 'stu_2',
+      studentName: 'Mwamba Esther',
+      matricule: '2026-000002',
+      feeTypeId: 'fee_min_sep',
+      feeTypeName: 'Minerval',
+      schoolYear: '2026-2027',
+      label: 'Minerval - Septembre 2026',
+      dueDate: '2026-09-15',
+      amountDue: 110000,
+      discountAmount: 0,
+      netAmount: 110000,
+      paidAmount: 110000,
+      status: 'paid',
+      createdAt: now,
+    },
+    {
+      id: 'chg_2_oct',
+      schoolId,
+      studentId: 'stu_2',
+      studentName: 'Mwamba Esther',
+      matricule: '2026-000002',
+      feeTypeId: 'fee_min_oct',
+      feeTypeName: 'Minerval',
+      schoolYear: '2026-2027',
+      label: 'Minerval - Octobre 2026',
+      dueDate: '2026-10-15',
+      amountDue: 110000,
+      discountAmount: 0,
+      netAmount: 110000,
+      paidAmount: 0,
+      status: 'pending',
+      createdAt: now,
+    },
+
+    // David Ilunga (Student 3 - 7e EB)
+    {
+      id: 'chg_3_ins',
+      schoolId,
+      studentId: 'stu_3',
+      studentName: 'Ilunga David',
+      matricule: '2026-000003',
+      feeTypeId: 'fee_ins',
+      feeTypeName: "Frais d'Inscription",
+      schoolYear: '2026-2027',
+      label: "Frais d'Inscription 2026-2027",
+      dueDate: '2026-09-05',
+      amountDue: 50000,
+      discountAmount: 0,
+      netAmount: 50000,
+      paidAmount: 50000,
+      status: 'paid',
+      createdAt: now,
+    },
+    {
+      id: 'chg_3_sep',
+      schoolId,
+      studentId: 'stu_3',
+      studentName: 'Ilunga David',
+      matricule: '2026-000003',
+      feeTypeId: 'fee_min_sep',
+      feeTypeName: 'Minerval',
+      schoolYear: '2026-2027',
+      label: 'Minerval - Septembre 2026',
+      dueDate: '2026-09-15',
+      amountDue: 85000,
+      discountAmount: 0,
+      netAmount: 85000,
+      paidAmount: 0,
+      status: 'overdue',
+      createdAt: now,
+    },
+
+    // Grâce Bakomito (Student 4 - Terminale Commerciale)
+    {
+      id: 'chg_4_ins',
+      schoolId,
+      studentId: 'stu_4',
+      studentName: 'Bakomito Grâce',
+      matricule: '2026-000004',
+      feeTypeId: 'fee_ins',
+      feeTypeName: "Frais d'Inscription",
+      schoolYear: '2026-2027',
+      label: "Frais d'Inscription 2026-2027",
+      dueDate: '2026-09-05',
+      amountDue: 50000,
+      discountAmount: 0,
+      netAmount: 50000,
+      paidAmount: 50000,
+      status: 'paid',
+      createdAt: now,
+    },
+    {
+      id: 'chg_4_exetat',
+      schoolId,
+      studentId: 'stu_4',
+      studentName: 'Bakomito Grâce',
+      matricule: '2026-000004',
+      feeTypeId: 'fee_exetat',
+      feeTypeName: "Frais d'Examen d'État",
+      schoolYear: '2026-2027',
+      label: "Examen d'État & Jury Pratique",
+      dueDate: '2026-10-10',
+      amountDue: 75000,
+      discountAmount: 0,
+      netAmount: 75000,
+      paidAmount: 75000,
+      status: 'paid',
+      createdAt: now,
+    }
+  ];
+
+  charges.forEach(c => batch.set(doc(db, 'schools', schoolId, 'studentCharges', c.id), c));
+
+  // 7. Initial Payments & Receipts
+  const payments: Payment[] = [
+    {
+      id: 'pay_init_1',
+      schoolId,
+      studentId: 'stu_1',
+      studentName: 'Kalonji Jonathan',
+      matricule: '2026-000001',
+      classId: 'cls_4sc',
+      className: 'Terminale Scientifique',
+      amount: 175000,
+      paymentDate: today,
+      paymentMethod: 'cash',
+      receiptNumber: 'REC-2026-000001',
+      note: "Paiement inscription et Minerval Septembre + avance",
+      createdBy: 'sys',
+      createdByName: 'Mme Cécile Mbuyi (Caissière)',
+      status: 'posted',
+      createdAt: now,
+    },
+    {
+      id: 'pay_init_2',
+      schoolId,
+      studentId: 'stu_1',
+      studentName: 'Kalonji Jonathan',
+      matricule: '2026-000001',
+      classId: 'cls_4sc',
+      className: 'Terminale Scientifique',
+      amount: 65000,
+      paymentDate: today,
+      paymentMethod: 'mobile_money',
+      receiptNumber: 'REC-2026-000002',
+      note: "Acompte Minerval Octobre via M-Pesa",
+      createdBy: 'sys',
+      createdByName: 'Mme Cécile Mbuyi (Caissière)',
+      status: 'posted',
+      createdAt: now,
+    },
+    {
+      id: 'pay_init_3',
+      schoolId,
+      studentId: 'stu_2',
+      studentName: 'Mwamba Esther',
+      matricule: '2026-000002',
+      classId: 'cls_1sc',
+      className: '1ère Scientifique A',
+      amount: 150000,
+      paymentDate: today,
+      paymentMethod: 'bank_transfer',
+      receiptNumber: 'REC-2026-000003',
+      note: "Bordereau Rawbank RWB-98214 - Inscription et Minerval Septembre",
+      createdBy: 'sys',
+      createdByName: 'Mme Cécile Mbuyi (Caissière)',
+      status: 'posted',
+      createdAt: now,
+    },
+  ];
+
+  payments.forEach(p => batch.set(doc(db, 'schools', schoolId, 'payments', p.id), p));
+
+  // 8. Receipts
+  const receipts: Receipt[] = [
+    {
+      id: 'rec_init_1',
+      schoolId,
+      receiptNumber: 'REC-2026-000001',
+      paymentId: 'pay_init_1',
+      studentId: 'stu_1',
+      studentName: 'Kalonji Jonathan',
+      matricule: '2026-000001',
+      className: 'Terminale Scientifique',
+      amount: 175000,
+      amountInWords: numberToWords(175000, 'CDF'),
+      currency: 'CDF',
+      paymentMethod: 'Espèces / Caisse',
+      cashierName: 'Mme Cécile Mbuyi',
+      allocationsSummary: [
+        { label: "Frais d'Inscription 2026-2027", amount: 50000 },
+        { label: 'Minerval - Septembre 2026', amount: 125000 },
+      ],
+      issuedAt: now,
+    },
+    {
+      id: 'rec_init_2',
+      schoolId,
+      receiptNumber: 'REC-2026-000002',
+      paymentId: 'pay_init_2',
+      studentId: 'stu_1',
+      studentName: 'Kalonji Jonathan',
+      matricule: '2026-000001',
+      className: 'Terminale Scientifique',
+      amount: 65000,
+      amountInWords: numberToWords(65000, 'CDF'),
+      currency: 'CDF',
+      paymentMethod: 'Mobile Money (M-Pesa)',
+      cashierName: 'Mme Cécile Mbuyi',
+      allocationsSummary: [
+        { label: 'Minerval - Octobre 2026 (Partiel)', amount: 65000 },
+      ],
+      issuedAt: now,
+    },
+  ];
+
+  receipts.forEach(r => batch.set(doc(db, 'schools', schoolId, 'receipts', r.id), r));
+
+  // 9. Cash Register Operations
+  const cashOps: CashOperation[] = [
+    {
+      id: 'csh_op_open',
+      schoolId,
+      date: today,
+      type: 'opening',
+      amount: 500000,
+      paymentMethod: 'cash',
+      performedBy: 'sys',
+      performedByName: 'Mme Cécile Mbuyi',
+      balanceAfter: 500000,
+      notes: "Ouverture de caisse - Fond de caisse initial du matin",
+      createdAt: now,
+    },
+    {
+      id: 'csh_op_pay1',
+      schoolId,
+      date: today,
+      type: 'inflow',
+      amount: 175000,
+      paymentMethod: 'cash',
+      referenceId: 'REC-2026-000001',
+      performedBy: 'sys',
+      performedByName: 'Mme Cécile Mbuyi',
+      balanceAfter: 675000,
+      notes: 'Paiement REC-2026-000001 - Kalonji Jonathan',
+      createdAt: now,
+    },
+    {
+      id: 'csh_op_pay2',
+      schoolId,
+      date: today,
+      type: 'inflow',
+      amount: 65000,
+      paymentMethod: 'mobile_money',
+      referenceId: 'REC-2026-000002',
+      performedBy: 'sys',
+      performedByName: 'Mme Cécile Mbuyi',
+      balanceAfter: 740000,
+      notes: 'Paiement REC-2026-000002 - Kalonji Jonathan (M-Pesa)',
+      createdAt: now,
+    },
+  ];
+
+  cashOps.forEach(op => batch.set(doc(db, 'schools', schoolId, 'cashOperations', op.id), op));
+
+  // Commit batch
+  await batch.commit();
+}
+
+export const seedInitialDemoData = seedDemoSchoolData;

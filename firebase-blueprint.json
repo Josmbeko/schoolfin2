@@ -1,0 +1,323 @@
+{
+  "entities": {
+    "School": {
+      "title": "School",
+      "description": "Information and global configuration for an educational institution",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string", "maxLength": 100 },
+        "address": { "type": "string", "maxLength": 200 },
+        "phone": { "type": "string", "maxLength": 30 },
+        "email": { "type": "string", "format": "email", "maxLength": 100 },
+        "currency": { "type": "string", "enum": ["CDF", "USD", "EUR"] },
+        "schoolYear": { "type": "string", "maxLength": 20 },
+        "matriculePrefix": { "type": "string", "maxLength": 20 },
+        "city": { "type": "string", "maxLength": 100 },
+        "province": { "type": "string", "maxLength": 100 },
+        "country": { "type": "string", "maxLength": 100 },
+        "enrollmentStartMonth": { "type": "string", "maxLength": 50 },
+        "enrollmentEndMonth": { "type": "string", "maxLength": 50 },
+        "schoolYearStartMonth": { "type": "string", "maxLength": 50 },
+        "schoolYearEndMonth": { "type": "string", "maxLength": 50 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "currency", "schoolYear"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile and role-based permissions within a school",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "schoolId": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string", "maxLength": 100 },
+        "role": { "type": "string", "enum": ["admin", "director", "cashier", "secretary"] },
+        "active": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "schoolId", "email", "role"]
+    },
+    "Class": {
+      "title": "Class",
+      "description": "Academic classroom or grade level",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "schoolId": { "type": "string" },
+        "name": { "type": "string", "maxLength": 80 },
+        "section": { "type": "string", "maxLength": 80 },
+        "level": { "type": "string", "maxLength": 50 },
+        "monthlyFee": { "type": "number" },
+        "active": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "schoolId", "name", "section", "monthlyFee"]
+    },
+    "Section": {
+      "title": "Section",
+      "description": "Pedagogical section of the school (e.g. Maternelle, Primaire, Éducation de Base, Secondaire)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "schoolId": { "type": "string" },
+        "name": { "type": "string", "maxLength": 100 },
+        "code": { "type": "string", "maxLength": 30 },
+        "description": { "type": "string", "maxLength": 255 },
+        "order": { "type": "number" },
+        "active": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "schoolId", "name"]
+    },
+    "Option": {
+      "title": "Option",
+      "description": "Academic track or specialty option",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "schoolId": { "type": "string" },
+        "name": { "type": "string", "maxLength": 100 },
+        "description": { "type": "string", "maxLength": 255 },
+        "section": { "type": "string", "maxLength": 80 },
+        "active": { "type": "boolean" }
+      },
+      "required": ["id", "schoolId", "name"]
+    },
+    "Student": {
+      "title": "Student",
+      "description": "Student record enrolled in the school",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "schoolId": { "type": "string" },
+        "matricule": { "type": "string", "maxLength": 30 },
+        "firstName": { "type": "string", "maxLength": 60 },
+        "lastName": { "type": "string", "maxLength": 60 },
+        "gender": { "type": "string", "enum": ["M", "F"] },
+        "dateOfBirth": { "type": "string" },
+        "placeOfBirth": { "type": "string", "maxLength": 80 },
+        "section": { "type": "string", "maxLength": 80 },
+        "classId": { "type": "string" },
+        "optionId": { "type": "string" },
+        "parentName": { "type": "string", "maxLength": 100 },
+        "parentPhone": { "type": "string", "maxLength": 30 },
+        "parentEmail": { "type": "string", "maxLength": 100 },
+        "address": { "type": "string", "maxLength": 200 },
+        "enrollmentDate": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "transferred", "archived", "suspended"] },
+        "financialSituation": { "type": "object" },
+        "photoUrl": { "type": "string" },
+        "creditAdvance": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "schoolId", "matricule", "firstName", "lastName", "classId", "status"]
+    },
+    "FeeType": {
+      "title": "FeeType",
+      "description": "Catalog of school fees configured for the institution",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "schoolId": { "type": "string" },
+        "name": { "type": "string", "maxLength": 100 },
+        "category": { "type": "string", "maxLength": 60 },
+        "section": { "type": "string", "maxLength": 80 },
+        "promotion": { "type": "string", "maxLength": 50 },
+        "optionId": { "type": "string" },
+        "optionName": { "type": "string", "maxLength": 100 },
+        "classId": { "type": "string" },
+        "className": { "type": "string", "maxLength": 80 },
+        "description": { "type": "string", "maxLength": 255 },
+        "amount": { "type": "number" },
+        "frequency": { "type": "string", "enum": ["once", "monthly", "termly", "annual"] },
+        "active": { "type": "boolean" }
+      },
+      "required": ["id", "schoolId", "name", "amount", "frequency"]
+    },
+    "StudentCharge": {
+      "title": "StudentCharge",
+      "description": "Individual scheduled billing obligation assigned to a student",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "schoolId": { "type": "string" },
+        "studentId": { "type": "string" },
+        "feeTypeId": { "type": "string" },
+        "category": { "type": "string", "maxLength": 60 },
+        "applicableMonth": { "type": "string", "maxLength": 50 },
+        "schoolYear": { "type": "string", "maxLength": 20 },
+        "label": { "type": "string", "maxLength": 120 },
+        "dueDate": { "type": "string" },
+        "amountDue": { "type": "number" },
+        "discountAmount": { "type": "number" },
+        "netAmount": { "type": "number" },
+        "paidAmount": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "partial", "paid", "overdue", "cancelled"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "schoolId", "studentId", "feeTypeId", "label", "amountDue", "netAmount", "status"]
+    },
+    "Payment": {
+      "title": "Payment",
+      "description": "Financial payment transaction recorded for a student",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "schoolId": { "type": "string" },
+        "studentId": { "type": "string" },
+        "classId": { "type": "string" },
+        "amount": { "type": "number" },
+        "paymentDate": { "type": "string" },
+        "targetMonth": { "type": "string", "maxLength": 50 },
+        "paymentMethod": { "type": "string", "enum": ["cash", "bank_transfer", "check", "mobile_money", "card", "other"] },
+        "receiptNumber": { "type": "string", "maxLength": 40 },
+        "note": { "type": "string", "maxLength": 255 },
+        "createdBy": { "type": "string" },
+        "createdByName": { "type": "string", "maxLength": 100 },
+        "status": { "type": "string", "enum": ["posted", "voided", "refunded"] },
+        "voidReason": { "type": "string", "maxLength": 255 },
+        "voidedBy": { "type": "string" },
+        "voidedAt": { "type": "string", "format": "date-time" },
+        "refundAmount": { "type": "number" },
+        "refundReason": { "type": "string", "maxLength": 255 },
+        "refundedBy": { "type": "string" },
+        "refundedAt": { "type": "string", "format": "date-time" },
+        "idempotencyKey": { "type": "string", "maxLength": 100 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "schoolId", "studentId", "amount", "paymentDate", "paymentMethod", "receiptNumber", "status"]
+    },
+    "PaymentAllocation": {
+      "title": "PaymentAllocation",
+      "description": "Sub-allocation of a payment toward a specific fee obligation",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "schoolId": { "type": "string" },
+        "paymentId": { "type": "string" },
+        "studentChargeId": { "type": "string" },
+        "studentId": { "type": "string" },
+        "amount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "schoolId", "paymentId", "studentChargeId", "amount"]
+    },
+    "Receipt": {
+      "title": "Receipt",
+      "description": "Formal audit receipt generated for an executed payment",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "schoolId": { "type": "string" },
+        "receiptNumber": { "type": "string", "maxLength": 40 },
+        "paymentId": { "type": "string" },
+        "studentId": { "type": "string" },
+        "studentName": { "type": "string", "maxLength": 120 },
+        "matricule": { "type": "string", "maxLength": 30 },
+        "className": { "type": "string", "maxLength": 80 },
+        "amount": { "type": "number" },
+        "amountInWords": { "type": "string", "maxLength": 255 },
+        "currency": { "type": "string", "maxLength": 10 },
+        "paymentMethod": { "type": "string" },
+        "cashierName": { "type": "string", "maxLength": 100 },
+        "issuedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "schoolId", "receiptNumber", "paymentId", "studentId", "amount"]
+    },
+    "CashOperation": {
+      "title": "CashOperation",
+      "description": "Daily cash register tracking including openings, receipts, and closings",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "schoolId": { "type": "string" },
+        "date": { "type": "string" },
+        "type": { "type": "string", "enum": ["opening", "inflow", "outflow", "closing"] },
+        "amount": { "type": "number" },
+        "paymentMethod": { "type": "string" },
+        "referenceId": { "type": "string" },
+        "performedBy": { "type": "string" },
+        "balanceAfter": { "type": "number" },
+        "physicalCash": { "type": "number" },
+        "cashDifference": { "type": "number" },
+        "notes": { "type": "string", "maxLength": 255 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "schoolId", "date", "type", "amount", "performedBy"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Immutable security and financial audit trail",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "schoolId": { "type": "string" },
+        "userId": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "action": { "type": "string", "maxLength": 60 },
+        "entityType": { "type": "string", "maxLength": 50 },
+        "entityId": { "type": "string", "maxLength": 100 },
+        "metadata": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "schoolId", "userId", "action", "entityType", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/schools/{schoolId}": {
+      "schema": { "$ref": "School" },
+      "description": "School institutional root configuration"
+    },
+    "/schools/{schoolId}/users/{userId}": {
+      "schema": { "$ref": "UserProfile" },
+      "description": "School staff members, roles, and profiles"
+    },
+    "/schools/{schoolId}/sections/{sectionId}": {
+      "schema": { "$ref": "Section" },
+      "description": "Pedagogical sections of the school"
+    },
+    "/schools/{schoolId}/classes/{classId}": {
+      "schema": { "$ref": "Class" },
+      "description": "Classes and grade levels"
+    },
+    "/schools/{schoolId}/options/{optionId}": {
+      "schema": { "$ref": "Option" },
+      "description": "Academic specialty tracks"
+    },
+    "/schools/{schoolId}/students/{studentId}": {
+      "schema": { "$ref": "Student" },
+      "description": "Enrolled student records"
+    },
+    "/schools/{schoolId}/feeTypes/{feeTypeId}": {
+      "schema": { "$ref": "FeeType" },
+      "description": "Catalog of school fees and pricing"
+    },
+    "/schools/{schoolId}/studentCharges/{chargeId}": {
+      "schema": { "$ref": "StudentCharge" },
+      "description": "Billing fee charges and schedule"
+    },
+    "/schools/{schoolId}/payments/{paymentId}": {
+      "schema": { "$ref": "Payment" },
+      "description": "Payment transactions"
+    },
+    "/schools/{schoolId}/paymentAllocations/{allocationId}": {
+      "schema": { "$ref": "PaymentAllocation" },
+      "description": "Fee distribution lines per payment"
+    },
+    "/schools/{schoolId}/receipts/{receiptId}": {
+      "schema": { "$ref": "Receipt" },
+      "description": "Official printable payment receipts"
+    },
+    "/schools/{schoolId}/cashOperations/{operationId}": {
+      "schema": { "$ref": "CashOperation" },
+      "description": "Cash register movements and closures"
+    },
+    "/schools/{schoolId}/auditLogs/{auditId}": {
+      "schema": { "$ref": "AuditLog" },
+      "description": "Immutable institutional audit records"
+    }
+  }
+}

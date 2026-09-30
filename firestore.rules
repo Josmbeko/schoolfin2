@@ -1,0 +1,81 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128;
+    }
+
+    // Connection test document
+    match /test/{docId} {
+      allow read, write: if true;
+    }
+
+    // School Root and Subcollections
+    match /schools/{schoolId} {
+      allow read, write: if isValidId(schoolId);
+
+      // School Users / Staff Roles
+      match /users/{userId} {
+        allow read, write: if isValidId(schoolId);
+      }
+
+      // Sections
+      match /sections/{sectionId} {
+        allow read, write: if isValidId(schoolId);
+      }
+
+      // Classes
+      match /classes/{classId} {
+        allow read, write: if isValidId(schoolId);
+      }
+
+      // Options
+      match /options/{optionId} {
+        allow read, write: if isValidId(schoolId);
+      }
+
+      // Students
+      match /students/{studentId} {
+        allow read, write: if isValidId(schoolId);
+      }
+
+      // Fee Types
+      match /feeTypes/{feeTypeId} {
+        allow read, write: if isValidId(schoolId);
+      }
+
+      // Student Charges / Facturations
+      match /studentCharges/{chargeId} {
+        allow read, write: if isValidId(schoolId);
+      }
+
+      // Payments
+      match /payments/{paymentId} {
+        allow read, write: if isValidId(schoolId);
+      }
+
+      // Payment Allocations
+      match /paymentAllocations/{allocationId} {
+        allow read, write: if isValidId(schoolId);
+      }
+
+      // Receipts
+      match /receipts/{receiptId} {
+        allow read, write: if isValidId(schoolId);
+      }
+
+      // Cash Operations
+      match /cashOperations/{operationId} {
+        allow read, write: if isValidId(schoolId);
+      }
+
+      // Audit Logs
+      match /auditLogs/{auditId} {
+        allow read, create: if isValidId(schoolId);
+        allow update, delete: if false; // Immutable audit trail
+      }
+    }
+  }
+}

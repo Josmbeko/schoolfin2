@@ -1,0 +1,8 @@
+{
+  "name": "Remix EduFinance Pro - Gestion des Frais Scolaires",
+  "description": "Application professionnelle de gestion des frais scolaires, facturations, échéanciers, paiements, reçus d\u0027encaissement et clôtures de caisse sur Firebase.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
