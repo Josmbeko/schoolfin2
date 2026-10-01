@@ -33,6 +33,6 @@ jobs:
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_AVID_BUCKSAW_QVXCH }}
-          projectId: avid-bucksaw-qvxch
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SCHOOLFIN2 }}
+          projectId: schoolfin2
           channelId: live
