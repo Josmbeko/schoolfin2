@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { LoginPage } from './pages/LoginPage';
 import { Navbar } from './components/common/Navbar';
 import { Sidebar, ActiveTab } from './components/common/Sidebar';
 import { DashboardPage } from './pages/DashboardPage';
@@ -469,10 +470,25 @@ function MainApp() {
   );
 }
 
+function AuthenticatedApp() {
+  const { currentUser, profile, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-400" />
+      </div>
+    );
+  }
+
+  if (!currentUser || !profile) return <LoginPage />;
+  return <MainApp />;
+}
+
 export default function App() {
   return (
     <AuthProvider>
-      <MainApp />
+      <AuthenticatedApp />
     </AuthProvider>
   );
 }
