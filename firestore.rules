@@ -2,79 +2,133 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
-    function isValidId(id) {
-      return id is string && id.size() > 0 && id.size() <= 128;
+    function signedIn() {
+      return request.auth != null;
     }
 
-    // Connection test document
+    function isSelf(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    function userPath(schoolId) {
+      return /databases/$(database)/documents/schools/$(schoolId)/users/$(request.auth.uid);
+    }
+
+    function hasProfile(schoolId) {
+      return signedIn() && exists(userPath(schoolId));
+    }
+
+    function activeMember(schoolId) {
+      return hasProfile(schoolId) &&
+        get(userPath(schoolId)).data.active == true;
+    }
+
+    function role(schoolId) {
+      return get(userPath(schoolId)).data.role;
+    }
+
+    function isAdmin(schoolId) {
+      return activeMember(schoolId) && role(schoolId) == 'admin';
+    }
+
+    function isDirector(schoolId) {
+      return activeMember(schoolId) && role(schoolId) == 'director';
+    }
+
+    function isCashier(schoolId) {
+      return activeMember(schoolId) && role(schoolId) == 'cashier';
+    }
+
+    function isSecretary(schoolId) {
+      return activeMember(schoolId) && role(schoolId) == 'secretary';
+    }
+
+    function isAdminEmail() {
+      return signedIn() &&
+        request.auth.token.email == 'controlpolytra@gmail.com' &&
+        request.auth.token.email_verified == true;
+    }
+
     match /test/{docId} {
-      allow read, write: if true;
+      allow read: if signedIn();
+      allow write: if false;
     }
 
-    // School Root and Subcollections
     match /schools/{schoolId} {
-      allow read, write: if isValidId(schoolId);
+      allow read: if activeMember(schoolId) || isAdminEmail();
+      allow create: if isAdminEmail();
+      allow update: if isAdmin(schoolId);
+      allow delete: if isAdmin(schoolId);
 
-      // School Users / Staff Roles
       match /users/{userId} {
-        allow read, write: if isValidId(schoolId);
+        allow read: if isAdmin(schoolId) || isSelf(userId);
+        allow create: if isAdmin(schoolId) ||
+          (isAdminEmail() && isSelf(userId) && request.resource.data.role == 'admin');
+        allow update, delete: if isAdmin(schoolId);
       }
 
-      // Sections
       match /sections/{sectionId} {
-        allow read, write: if isValidId(schoolId);
+        allow read: if activeMember(schoolId);
+        allow create, update, delete: if isAdmin(schoolId) || isDirector(schoolId);
       }
 
-      // Classes
       match /classes/{classId} {
-        allow read, write: if isValidId(schoolId);
+        allow read: if activeMember(schoolId);
+        allow create, update, delete: if isAdmin(schoolId) || isDirector(schoolId) || isSecretary(schoolId);
       }
 
-      // Options
       match /options/{optionId} {
-        allow read, write: if isValidId(schoolId);
+        allow read: if activeMember(schoolId);
+        allow create, update, delete: if isAdmin(schoolId) || isDirector(schoolId) || isSecretary(schoolId);
       }
 
-      // Students
       match /students/{studentId} {
-        allow read, write: if isValidId(schoolId);
+        allow read: if activeMember(schoolId);
+        allow create, update: if isAdmin(schoolId) || isDirector(schoolId) || isSecretary(schoolId);
+        allow delete: if isAdmin(schoolId) || isDirector(schoolId);
       }
 
-      // Fee Types
       match /feeTypes/{feeTypeId} {
-        allow read, write: if isValidId(schoolId);
+        allow read: if activeMember(schoolId);
+        allow create, update, delete: if isAdmin(schoolId) || isDirector(schoolId);
       }
 
-      // Student Charges / Facturations
       match /studentCharges/{chargeId} {
-        allow read, write: if isValidId(schoolId);
+        allow read: if activeMember(schoolId);
+        allow create, update: if isAdmin(schoolId) || isDirector(schoolId);
+        allow delete: if isAdmin(schoolId);
       }
 
-      // Payments
       match /payments/{paymentId} {
-        allow read, write: if isValidId(schoolId);
+        allow read: if activeMember(schoolId);
+        allow create: if isAdmin(schoolId) || isDirector(schoolId) || isCashier(schoolId);
+        allow update: if isAdmin(schoolId) || isDirector(schoolId) || isCashier(schoolId);
+        allow delete: if false;
       }
 
-      // Payment Allocations
       match /paymentAllocations/{allocationId} {
-        allow read, write: if isValidId(schoolId);
+        allow read: if activeMember(schoolId);
+        allow create: if isAdmin(schoolId) || isDirector(schoolId) || isCashier(schoolId);
+        allow update, delete: if false;
       }
 
-      // Receipts
       match /receipts/{receiptId} {
-        allow read, write: if isValidId(schoolId);
+        allow read: if activeMember(schoolId);
+        allow create: if isAdmin(schoolId) || isDirector(schoolId) || isCashier(schoolId);
+        allow update, delete: if false;
       }
 
-      // Cash Operations
       match /cashOperations/{operationId} {
-        allow read, write: if isValidId(schoolId);
+        allow read: if activeMember(schoolId);
+        allow create: if isAdmin(schoolId) || isDirector(schoolId) || isCashier(schoolId);
+        allow update: if isAdmin(schoolId) || isDirector(schoolId);
+        allow delete: if false;
       }
 
-      // Audit Logs
       match /auditLogs/{auditId} {
-        allow read, create: if isValidId(schoolId);
-        allow update, delete: if false; // Immutable audit trail
+        allow read: if isAdmin(schoolId);
+        allow create: if activeMember(schoolId);
+        allow update, delete: if false;
       }
     }
   }
